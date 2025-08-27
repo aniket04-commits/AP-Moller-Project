@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ndacdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - ndac-net
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025" # web UI
+      - "1025:1025" # SMTP
+    networks:
+      - ndac-net
+
+  api:
+    build: ./backend
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: ndacdb
+      API_KEY: SUPERSECRET_NDAC_KEY
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      ALERT_EMAIL_FROM: ndac-alerts@example.com
+      ALERT_EMAIL_TO: ops-team@example.com
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - mailhog
+    networks:
+      - ndac-net
+
+volumes:
+  pgdata:
+
+networks:
+  ndac-net:
